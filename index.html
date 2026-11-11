@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kunwork - Delete Account</title>
+<style>
+  :root { --bg:#f6f7f9; --card:#fff; --text:#16181d; --muted:#5b6270; --accent:#1f6feb; --border:#dfe3e8; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#111317; --card:#1a1d23; --text:#eef0f3; --muted:#9aa3b2; --accent:#5b9dff; --border:#2b303a; } }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font:16px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; }
+  main { max-width:560px; margin:0 auto; padding:32px 16px 64px; }
+  h1 { font-size:26px; margin:0 0 8px; }
+  h2 { font-size:18px; margin:28px 0 8px; }
+  p, li { color:var(--muted); }
+  .card { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:20px; margin-top:20px; }
+  label { display:block; font-weight:600; color:var(--text); margin-bottom:6px; }
+  input[type=tel] { width:100%; padding:12px; font-size:16px; border:1px solid var(--border); border-radius:10px; background:var(--bg); color:var(--text); }
+  button { margin-top:14px; width:100%; padding:13px; font-size:16px; font-weight:600; border:0; border-radius:10px; background:var(--accent); color:#fff; cursor:pointer; }
+  button:disabled { opacity:.6; cursor:default; }
+  .err { color:#d93025; margin-top:10px; display:none; }
+  dialog { border:1px solid var(--border); border-radius:14px; padding:24px; max-width:360px; background:var(--card); color:var(--text); }
+  dialog::backdrop { background:rgba(0,0,0,.5); }
+  dialog p { color:var(--text); margin:8px 0 16px; }
+  .hp { position:absolute; left:-9999px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Kunwork &mdash; Delete your account</h1>
+  <p>Use this page to request deletion of your Kunwork account and associated data. Enter the phone number registered in the Kunwork app. Our admins will verify the request and delete your account within 24 hours.</p>
+
+  <form class="card" id="f">
+    <label for="phone">Registered phone number</label>
+    <input id="phone" name="phone" type="tel" inputmode="tel" placeholder="+998 90 123 45 67" required autocomplete="tel">
+    <input class="hp" type="text" name="_honey" tabindex="-1" autocomplete="off" aria-hidden="true">
+    <button id="btn" type="submit">Request account deletion</button>
+    <div class="err" id="err">Something went wrong. Please try again or email admin@kunwork.uz.</div>
+  </form>
+
+  <h2>Delete in the app instead</h2>
+  <ol>
+    <li>Open the Kunwork app and log in.</li>
+    <li>Go to Profile &rarr; Settings &rarr; Delete account.</li>
+    <li>Confirm. Your account is deleted.</li>
+  </ol>
+
+  <h2>What is deleted</h2>
+  <p>Your profile (name, phone number), posted jobs, messages, photos, reviews, saved items and push notification token are permanently deleted.</p>
+  <p>Questions? Contact <a href="mailto:admin@kunwork.uz">admin@kunwork.uz</a>.</p>
+</main>
+
+<dialog id="dlg">
+  <strong>Request received</strong>
+  <p>Our admins will verify your request and delete your account and associated data within 24 hours.</p>
+  <button id="ok" type="button">OK</button>
+</dialog>
+
+<script>
+const f = document.getElementById('f'), btn = document.getElementById('btn'),
+      err = document.getElementById('err'), dlg = document.getElementById('dlg');
+f.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  err.style.display = 'none';
+  btn.disabled = true;
+  try {
+    const r = await fetch('https://formsubmit.co/ajax/admin@kunwork.uz', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify({
+        phone: f.phone.value.trim(),
+        _honey: f._honey.value,
+        _subject: 'Kunwork account deletion request',
+        _template: 'table',
+        _captcha: 'false'
+      })
+    });
+    const j = await r.json();
+    if (!r.ok || j.success === 'false' || j.success === false) throw new Error();
+    f.reset();
+    dlg.showModal();
+  } catch (_) {
+    err.style.display = 'block';
+  } finally {
+    btn.disabled = false;
+  }
+});
+document.getElementById('ok').onclick = () => dlg.close();
+</script>
+</body>
+</html>
